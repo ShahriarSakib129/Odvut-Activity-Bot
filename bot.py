@@ -310,9 +310,9 @@ async def myrank(update: Update, context: ContextTypes.DEFAULT_TYPE):
     "📢 এই command সাধারণ সদস্যদের জন্য। Admin-দের জন্য আছে শুধু দায়িত্ব আর দুশ্চিন্তা!",
     "💀 আবার /myrank? Admin সাহেব, আপনার কি leaderboard-এর সঙ্গে personal শত্রুতা আছে?",
     "🎖️ অভিনন্দন! আপনি আজও Admin পদে বহাল আছেন। এর চেয়ে বড় achievement আর কী!"
-]
+        ]
 
-admin_reply_index = 0
+        admin_reply_index = 0
 
             global admin_reply_index
 
