@@ -278,18 +278,8 @@ async def track_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         logger.exception("Failed to record activity in PostgreSQL")
 
-
-# =========================
-# /myrank — member's own stats/rank
-# =========================
-async def myrank(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    message = update.effective_message
-    if not user or not message:
-        return
-
-    if await require_admin(update, context):
-        ADMIN_REPLIES = [
+        # Admin /myrank replies — sequential order
+ADMIN_REPLIES = [
     "👑 আপনি Admin! আপনার আবার Activity Score কীসের? আপনি তো activity-র হিসাব রাখেন! 😎",
     "😂 আপনি হিসাব রাখেন সবার, আপনার হিসাব রাখবে কে?",
     "🫡 Admin সাহেব, নিজের rank নিয়ে এত চিন্তা কেন? Group সামলান!",
@@ -310,11 +300,20 @@ async def myrank(update: Update, context: ContextTypes.DEFAULT_TYPE):
     "📢 এই command সাধারণ সদস্যদের জন্য। Admin-দের জন্য আছে শুধু দায়িত্ব আর দুশ্চিন্তা!",
     "💀 আবার /myrank? Admin সাহেব, আপনার কি leaderboard-এর সঙ্গে personal শত্রুতা আছে?",
     "🎖️ অভিনন্দন! আপনি আজও Admin পদে বহাল আছেন। এর চেয়ে বড় achievement আর কী!"
-        ]
+]
 
-        admin_reply_index = 0
+admin_reply_index = 0
+# =========================
+# /myrank — member's own stats/rank
+# =========================
+async def myrank(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global admin_reply_index
 
-            global admin_reply_index
+    user = update.effective_user
+    message = update.effective_message
+
+    if not user or not message:
+        return
 
     if await require_admin(update, context):
         reply = ADMIN_REPLIES[admin_reply_index]
@@ -322,6 +321,8 @@ async def myrank(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.reply_text(reply)
         return
+
+    # নিচে non-admin সদস্যদের আগের /myrank code থাকবে
 
     try:
         group_id = configured_group_id()
