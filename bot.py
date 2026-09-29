@@ -113,7 +113,7 @@ def normalized_score(value, cap):
     if cap <= 0:
         return 0.0
     return min(max(float(value or 0), 0.0) / cap, 1.0) * 100.0
-
+    
 
 def calculate_score(row):
     days_part = normalized_score(row["active_days"], ACTIVE_DAYS_CAP) * WEIGHT_DAYS
@@ -289,14 +289,38 @@ async def myrank(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if await require_admin(update, context):
-        admin_replies = [
-            "👑 আপনি Admin! আপনার আবার Activity Score কীসের? আপনি তো activity-র হিসাব রাখেন! 😎",
-            "😂 আপনি হিসাব রাখেন সবার, আপনার হিসাব রাখবে কে? Admin-দের জন্য আলাদা নিয়ম!",
-            "🫡 Admin সাহেব/ম্যাডাম, আপনার দায়িত্বই তো সবাইকে active রাখা—নিজের rank নিয়ে চিন্তা বাদ দিন!",
-            "🏆 আপনার rank: Admin Supreme! এই leaderboard-এ সেই rank-এর জায়গা নেই। 😄",
-            "📢 আপনি Admin, তাই আপনার activity গোপনীয়… অন্তত এই বটের কাছে! 🤫",
-        ]
-        await message.reply_text(random.choice(admin_replies))
+        ADMIN_REPLIES = [
+    "👑 আপনি Admin! আপনার আবার Activity Score কীসের? আপনি তো activity-র হিসাব রাখেন! 😎",
+    "😂 আপনি হিসাব রাখেন সবার, আপনার হিসাব রাখবে কে?",
+    "🫡 Admin সাহেব, নিজের rank নিয়ে এত চিন্তা কেন? Group সামলান!",
+    "🏆 আপনার Rank: Admin Supreme! এই leaderboard-এ সেই rank-এর জায়গা নেই।",
+    "📢 আপনি Admin, আপনার activity গোপনীয়… অন্তত এই বটের কাছে! 🤫",
+    "🤣 আপনি /myrank দিয়েছেন কেন? নিজের কাছে নিজের রিপোর্ট জমা দেবেন নাকি?",
+    "👀 Admin হয়েও নিজের activity দেখতে চান? সন্দেহজনক ব্যাপার!",
+    "☕ আগে চা খান Admin সাহেব, Activity Score দিয়ে কী করবেন?",
+    "🫵 আপনি তো নিয়ম বানান! নিজের জন্য আবার নিয়মের দরকার কী?",
+    "🚨 সতর্কবার্তা: Admin-এর অতিরিক্ত rank-checking শনাক্ত করা হয়েছে!",
+    "🤖 আমার database-এ আপনার rank নেই, কারণ আপনাকে হিসাবের বাইরে রাখা হয়েছে!",
+    "😎 আপনি leaderboard দেখেন, leaderboard আপনাকে দেখে না!",
+    "📊 আপনার Activity Report: Admin হওয়াটাই আপনার সবচেয়ে বড় activity!",
+    "😂 আপনি কি নিজেকেও group থেকে ban করে activity বাড়াতে চান?",
+    "👑 Admin-এর rank জানতে হলে আগে Bot-এর permission নিতে হবে!",
+    "🫡 আপনার কাজ member-দের active রাখা, নিজের score দেখে active হওয়া নয়!",
+    "🤔 আপনি Admin, নাকি নিজের fan club-এর president?",
+    "📢 এই command সাধারণ সদস্যদের জন্য। Admin-দের জন্য আছে শুধু দায়িত্ব আর দুশ্চিন্তা!",
+    "💀 আবার /myrank? Admin সাহেব, আপনার কি leaderboard-এর সঙ্গে personal শত্রুতা আছে?",
+    "🎖️ অভিনন্দন! আপনি আজও Admin পদে বহাল আছেন। এর চেয়ে বড় achievement আর কী!"
+]
+
+admin_reply_index = 0
+
+            global admin_reply_index
+
+    if await require_admin(update, context):
+        reply = ADMIN_REPLIES[admin_reply_index]
+        admin_reply_index = (admin_reply_index + 1) % len(ADMIN_REPLIES)
+
+        await message.reply_text(reply)
         return
 
     try:
