@@ -418,8 +418,8 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         group_id = configured_group_id()
         month, _ = current_month_and_date()
-        all_rows = get_month_rows(group_id, month)
-        rows = eligible_rows(all_rows)[:10]
+        all_rows = sort_rows(get_month_rows(group_id, month))
+        ranked_rows = eligible_rows(all_rows)
     except Exception:
         logger.exception("Could not fetch /stats")
         await message.reply_text("⚠️ Database থেকে stats আনা যায়নি।")
@@ -433,23 +433,37 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         1 for row in all_rows
         if int(row["active_days"] or 0) >= MIN_ACTIVE_DAYS
     )
+
     lines = [
         f"📊 Group Activity Summary — {month}",
         f"👥 Tracked members: {len(all_rows)}",
         f"🏅 Eligible members (≥{MIN_ACTIVE_DAYS} active days): {eligible_count}",
         "",
-        "Top 10 by Activity Score:",
+        "📋 All Members Activity (eligible ও not eligible):",
+        "",
     ]
-    if not rows:
-        lines.append("এখনো eligible member নেই।")
-    else:
-        for position, row in enumerate(rows, start=1):
-            lines.append(
-                f"{medal(position)} {display_name(row['first_name'], row['username'], row['user_id'])}"
-                f" — {row['score']:.2f}/100 | "
-                f"{row['active_days']} days | {row['message_count']} msgs"
-            )
-    await message.reply_text("\n".join(lines))
+
+    for position, row in enumerate(all_rows, start=1):
+        rank_position = next(
+            (
+                rank for rank, eligible_row in enumerate(ranked_rows, start=1)
+                if int(eligible_row["user_id"]) == int(row["user_id"])
+            ),
+            None,
+        )
+        rank_text = f"#{rank_position}" if rank_position else "Not eligible"
+        lines.append(
+            f"{position}. {display_name(row['first_name'], row['username'], row['user_id'])}\n"
+            f"   🏅 Rank: {rank_text}\n"
+            f"   ⭐ Activity Score: {row['score']:.2f}/100\n"
+            f"   📅 Active Days: {row['active_days']}\n"
+            f"   💬 Messages: {row['message_count']}\n"
+            f"   ⏱ Estimated Active Time: {duration_text(row['activity_time_seconds'])}"
+        )
+
+    output = "\n\n".join(lines)
+    for offset in range(0, len(output), 3900):
+        await message.reply_text(output[offset:offset + 3900])
 
 
 # =========================
