@@ -448,7 +448,7 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================
-# /stats — admin-only summary + Top 10
+# /stats — admin-only full member stats (eligible + not eligible)
 # =========================
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
@@ -461,8 +461,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         group_id = configured_group_id()
         month = requested_month(context, "stats")
-        all_rows = get_month_rows(group_id, month)
-        rows = eligible_rows(all_rows)[:10]
+        all_rows = sort_rows(get_month_rows(group_id, month))
     except ValueError as exc:
         await message.reply_text(str(exc))
         return
@@ -479,23 +478,34 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         1 for row in all_rows
         if int(row["active_days"] or 0) >= MIN_ACTIVE_DAYS
     )
-    lines = [
+    header = [
         f"📊 Group Activity Summary — {month}",
         f"👥 Tracked members: {len(all_rows)}",
         f"🏅 Eligible members (≥{MIN_ACTIVE_DAYS} active days): {eligible_count}",
+        f"📋 নিচে eligible ও not eligible—সবার stats দেওয়া হলো (Activity Score অনুযায়ী সাজানো):",
         "",
-        "Top 10 by Activity Score:",
     ]
-    if not rows:
-        lines.append("এখনো eligible member নেই।")
-    else:
-        for position, row in enumerate(rows, start=1):
-            lines.append(
-                f"{medal(position)} {display_name(row['first_name'], row['username'], row['user_id'])}"
-                f" — {row['score']:.2f}/100 | "
-                f"{row['active_days']} days | {row['message_count']} msgs"
-            )
-    await message.reply_text("\n".join(lines))
+    chunks = []
+    current = "\n".join(header)
+    for position, row in enumerate(all_rows, start=1):
+        is_eligible = int(row["active_days"] or 0) >= MIN_ACTIVE_DAYS
+        status = "Eligible" if is_eligible else "Not eligible"
+        member_line = (
+            f"{position}. {display_name(row['first_name'], row['username'], row['user_id'])}\n"
+            f"   Score: {row['score']:.2f}/100 | Status: {status}\n"
+            f"   Active days: {row['active_days']} | Messages: {row['message_count']}\n"
+            f"   Estimated active time: {duration_text(row['activity_time_seconds'])}"
+        )
+        if len(current) + len(member_line) + 2 > 3500:
+            chunks.append(current)
+            current = f"📊 {month} — continued\n\n" + member_line
+        else:
+            current += "\n\n" + member_line
+    if current:
+        chunks.append(current)
+
+    for chunk in chunks:
+        await message.reply_text(chunk)
 
 
 # =========================
